@@ -26,6 +26,8 @@ const child = spawn(
   [
     '--headless=new',
     '--disable-gpu',
+      '--no-sandbox',
+      '--disable-dev-shm-usage',
     '--no-first-run',
     '--allow-file-access-from-files',
     '--hide-scrollbars',

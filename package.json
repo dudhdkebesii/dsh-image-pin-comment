@@ -39,11 +39,11 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/OWNER/dsh-image-pin-comment.git"
+    "url": "git+https://github.com/dudhdkebesii/dsh-image-pin-comment.git"
   },
-  "homepage": "https://github.com/OWNER/dsh-image-pin-comment#readme",
+  "homepage": "https://github.com/dudhdkebesii/dsh-image-pin-comment#readme",
   "bugs": {
-    "url": "https://github.com/OWNER/dsh-image-pin-comment/issues"
+    "url": "https://github.com/dudhdkebesii/dsh-image-pin-comment/issues"
   },
   "keywords": [
     "dsh",

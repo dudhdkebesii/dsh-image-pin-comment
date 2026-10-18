@@ -100,6 +100,8 @@ async function runScenario(bridge) {
     [
       '--headless=new',
       '--disable-gpu',
+      '--no-sandbox',
+      '--disable-dev-shm-usage',
       '--no-first-run',
       '--no-default-browser-check',
       '--allow-file-access-from-files',
