@@ -1,0 +1,26 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: 语法检查
+        run: npm run check
+      - name: 冒烟测试（fixture · 真实 Chrome）
+        run: |
+          if [ -x /usr/bin/google-chrome ] || [ -x /usr/bin/chromium ]; then
+            node test/smoke.mjs
+          else
+            echo "::notice::没有 Chrome，跳过夹具冒烟测试"
+          fi
+      - name: 打包内容检查
+        run: npm pack --dry-run

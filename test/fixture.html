@@ -1,0 +1,401 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>dsh-image-pin-comment fixture</title>
+<style>
+  body { margin: 0; padding: 24px; font: 14px/22px -apple-system, "PingFang SC", sans-serif; background: #f4f5f7; }
+  #stage { width: 720px; }
+  #rail { display: flex; gap: 8px; min-height: 8px; margin-bottom: 10px; }
+  .rail-thumb { width: 72px; height: 48px; object-fit: cover; border-radius: 8px; border: 1px solid #d7dae0; }
+  [data-composer-input] { min-height: 96px; padding: 10px 12px; border-radius: 12px; background: #fff;
+    border: 1px solid #d7dae0; white-space: pre-wrap; outline: none; }
+  #log { margin-top: 18px; font: 12px/18px ui-monospace, monospace; color: #4b5563; white-space: pre-wrap; }
+</style>
+</head>
+<body>
+<div id="stage" data-composer-card>
+  <div id="rail"></div>
+  <div data-composer-input contenteditable="true" role="textbox" data-conversation-session="fixture"></div>
+</div>
+<div id="log"></div>
+
+<script>
+  window.__effects = [];
+  window.__fakeReact = {
+    createElement: function () { return null; },
+    useEffect: function (fn) {
+      var cleanup = fn();
+      if (typeof cleanup === 'function') window.__effects.push(cleanup);
+    }
+  };
+  window.__ModuleLoader__ = {
+    load: function (spec) {
+      var require = function (name) {
+        if (name === 'react') return window.__fakeReact;
+        throw new Error('no such seed module: ' + name);
+      };
+      window.__pinPlugin = spec.factory(require);
+    }
+  };
+</script>
+<script src="../lib/client.js"></script>
+
+<script>
+(function () {
+  'use strict';
+
+  var IMAGE_A = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAABLAAAAMgCAIAAAC8ggxVAAASj0lEQVR42u3XsQ0AMAgDQUbJ/uMwDHXatDRIKHcjuLD0UQAAAHwpTAAAACAIAQAAEIQAAAAIQgAAAAQhAAAAghAAAABBCAAAgCAEAABAEAIAACAIAQAAEIQAAAAIQgAAAAQhAAAAghAAAABBCAAAgCAEAABAEAIAACAIAQAAEIQAAAAIQgAAAAQhAAAAghAAAABBCAAAgCAEAAAQhAAAAAhCAAAABCEAAACCEAAAAEEIAACAIAQAAEAQAgAAIAgBAAAQhAAAAAhCAAAABCEAAACCEAAAAEEIAACAIAQAAEAQAgAAIAgBAAAQhAAAAAhCAAAABCEAAACCEAAAAEEIAACAIAQAAEAQAgAACEIAAAAEIQAAAIIQAAAAQQgAAIAgBAAAQBACAAAgCAEAABCEAAAACEIAAAAEIQAAAIIQAAAAQQgAAIAgBAAAQBACAAAgCAEAABCEAAAACEIAAAAEIQAAAIIQAAAAQQgAAIAgBAAAQBACAAAgCAEAABCEAAAAghAAAABBCAAAgCAEAABAEAIAACAIAQAAEIQAAAAIQgAAAAQhAAAAghAAAABBCAAAgCAEAABAEAIAACAIAQAAEIQAAAAIQgAAAAQhAAAAghAAAABBCAAAgCAEAABAEAIAACAIAQAAEIQAAAAIQgAAAEEIAACAIAQAAEAQAgAAIAgBAAAQhAAAAAhCAAAABCEAAACCEAAAAEEIAACAIAQAAEAQAgAAIAgBAAAQhAAAAAhCAAAABCEAAACCEAAAAEEIAACAIAQAAEAQAgAAIAgBAAAQhAAAAAhCAAAABCEAAACCEAAAQBACAAAgCAEAABCEAAAACEIAAAAEIQAAAIIQAAAAQQgAAIAgBAAAQBACAAAgCAEAABCEAAAACEIAAAAEIQAAAIIQAAAAQQgAAIAgBAAAQBACAAAgCAEAABCEAAAACEIAAAAEIQAAAIIQAAAAQTjuAGzgrgFAECIIAUEIAAhCBCEgCAEAQYggBAQhACAIEYSAIAQABCGCEBCEAIAgRBACghAAEIQIQkAQAgCCEEEICEIAQBAKQgBBCAAIQkEIIAgBAEEoCAEEIQAgCAUhgCAEAAShIAQQhACAIBSEAIIQABCEghBAEAIAglAQAghCAEAQCkIAQQgACEJBCCAIAQBBKAgBBCEAIAgFIYAgBAAEoSAEEIQAgCAUhACCEAAEIYIQQBACgCBEEAKCEAAQhAhCQBACAIIQQQgIQgBAECIIAUEIAAhCBCEgCAEAQYggBAQhACAIEYSAIAQABCGCEBCEAIAgFIQAghAAEISCEEAQAgCCUBACCEIAQBAKQgBBCAAIQkEIIAgBAEEoCAEEIQAgCAUhgCAEAAShIAQQhACAIBSEAIIQABCEghBAEAIAglAQAghCAEAQCkIAQQgACEJBCCAIAQBBKAgBBCEACEIEIYAgBABBiCAEBCEAIAgRhIAgBAAEIYIQEIQAgCBEEAKCEAAQhAhCQBACAIIQQQgIQgBAECIIAUEIAAhCBCEgCAEAQYggBAQhACAIBSGAIAQABKEgBBCEAIAgFIQAghAAEISCEEAQAgCCUBACCEIAQBAKQgBBCAAIQkEIIAgBAEEoCAEEIQAgCAUhgCAEAAShIAQQhACAIBSEAIIQABCEghBAEAIAglAQAghCAEAQCkIAQQgAghBBCCAIAUAQIggBQQgACEIEISAIAQBBiCAEBCEAIAgRhIAgBAAEIYIQEIQAgCBEEAKCEAAQhAhCQBACAIIQQQgIQgBAEApCAEEIAAhCQQggCAEAQSgIAQQhACAIBSGAIAQABKEgBBCEAIAgFIQAghAAEISCEEAQAgCCUBACCEIAQBAKQgBBCAAIQkEIIAgBAEEoCAEEIQAgCAUhgCAEAAShIAQQhACAIBSEAIIQAAQhghBAEAKAIEQQAoIQABCECEJAEAIAghBBCAhCAEAQIggBQQgACEIEISAIAQBBiCAEBCEAIAgRhIAgBAAEIYIQEIQAgCBEEAKCEAAQhIIQQBACAIJQEAIIQgBAEApCAEEIAAhCQQggCAEAQSgIAQQhACAIBSGAIAQABKEgBBCEAIAgFIQAghAAEISCEEAQAgCCUBACCEIAQBAKQgBBCAAIQkEIIAgBAEEoCAEEIQAgCAUhgCAEAEGIIAQQhAAgCBGEgCAEAAQhghAQhACAIEQQAoIQABCECEJAEAIAghBBCAhCAEAQIggBQQgACEIEISAIAQBBiCAEBCEAIAgFIYAgBAAEoSAEEIQAgCAUhACCEAAQhIIQQBACAIJQEAIIQgBAEApCAEEIAAhCQQggCAEAQSgIAQQhACAIBSGAIAQABKEgBBCEAIAgFIQAghAAEISCEEAQAgCCUBACCEIAQBAKQgBBCACCEEEIIAgBQBAiCAFBCAAIQgQhIAgBAEGIIAQEIQAgCBGEgCAEAAQhghAQhACAIEQQAoIQABCECEJAEAIAghBBCAhCAEAQIggBQQgACEJBCCAIAQBBKAgBBCEAIAgFIYAgBAAEoSAEEIQAgCAUhACCEAAQhIIQQBACAIJQEAIIQgBAEApCAEEIAAhCQQggCAEAQQgAAIAgBAAAQBACAAAgCAEAABCEAAAAghAAAABBCAAAgCAEAABAEAIAACAIAQAAEIQAAAAIQgAAAAQhAAAAghAAAABBCAAAgCAEAABAEAIAACAIAQAAEIQAAAAIQgAAAAQhAAAAghAAAABBCAAAgCAEAABAEAIAACAIAQAAEIQAAAAIQgAAAEEIAACAIAQAAEAQAgAAIAgBAAAQhAAAAAhCAAAABCEAAACCEAAAAEEIAACAIAQAAEAQAgAAIAgBAAAQhAAAAAhCAAAABCEAAACCEAAAAEEIAACAIAQAAEAQAgAAIAgBAAAQhAAAAAhCAAAABCEAAIAgNAEAAIAgBAAAQBACAAAgCAEAABCEAAAACEIAAAAEIQAAAIIQAAAAQQgAAIAgBAAAQBACAAAgCAEAABCEAAAACEIAAAAEIQAAAIIQAAAAQQgAAIAgBAAAQBACAAAgCAEAABCEAAAACEIAAAAEIQAAAIIQAABAEAIAACAIAQAAEIQAAAAIQgAAAAQhAAAAghAAAABBCAAAgCAEAABAEAIAACAIAQAAEIQAAAAIQgAAAAQhAAAAghAAAABBCAAAgCAEAABAEAIAACAIAQAAEIQAAAAIQgAAAAQhAAAAghAAAABBCAAAIAgBAAAQhAAAAAhCAAAABCEAAACCEAAAAEEIAACAIAQAAEAQAgAAIAgBAAAQhAAAAAhCAAAABCEAAACCEAAAAEEIAACAIAQAAEAQAgAAIAgBAAAQhAAAAAhCAAAABCEAAACCEAAAAEEIAACAIAQAAEAQAgANCbCBuxaEAIAgBAQhghAAEISAIEQQAgCCEBCECEIAQBACglAQAgAIQkAQCkIAAEEICEJBCAAgCAFBKAgBAAQhIAgFIQAgCAEEoSAEAAQhgCAUhACAIAQQhIIQABCEAIJQEAIAghBAEApCAEAQAghCQQgACEIAQSgIAQBBCCAIBSEAIAgBBKEgBAAEIYAgFIQAgCAEEISCEAAQhACCUBACAIIQQBAKQgBAEAIIQkEIAAhCAEEoCAEAQQgIQgQhACAIAUGIIAQABCEgCBGEAIAgBAQhghAAEISAIBSEAACCEBCEghAAQBACglAQAgAIQkAQCkIAQBACCEJBCAAIQgBBKAgBAEEIIAgFIQAgCAEEoSAEAAQhgCAUhACAIAQQhIIQABCEAIJQEAIAghBAEApCAEAQAghCQQgACEIAQSgIAQBBCCAIBSEAIAgBBKEgBAAEIYAgFIQAgCAEEISCEAAQhACCUBACAIIQEIQIQgBAEAKCEEEIAAhCQBAiCAEAQQgIQgQhACAIAUEoCAEABCEgCAUhAIAgBAShIAQAEISAIBSEAACCEBCEghAAEIQAglAQAgCCEEAQCkIAQBACCEJBCAAIQgBBKAgBAEEIIAgFIQAgCAEEoSAEAAQhgCAUhACAIAQQhIIQABCEAIJQEAIAghBAEApCAEAQAghCQQgACEIAQSgIAQBBCCAIBSEAIAgBBKEgBAAEIYAgFIQAgCAEBCGCEAAQhIAgRBACAIIQEIQIQgBAEAKCEEEIAAhCQBAKQgAAQQgIQkEIACAIAUEoCAEABCEgCAUhACAIAQShIAQABCGAIBSEAIAgBBCEghAAEIQAglAQAgCCEEAQCkIAQBACCEJBCAAIQgBBKAgBAEEIIAgFIQAgCAEEoSAEAAQhgCAUhACAIAQQhIIQABCEAIJQEAIAghBAEApCAEAQAghCQQgACEIAQSgIAQBBCAhCBCEAIAgBQYggBAAEISAIEYQAgCAEBCGCEAAQhIAgFIQAAIIQEISCEABAEAKCUBACAAhCQBAKQgAAQQgIQkEIAAhCAEEoCAEAQQggCAUhACAIAQShIAQABCGAIBSEAIAgBBCEghAAEIQAglAQAgCCEEAQCkIAQBACCEJBCAAIQgBBKAgBAEEIIAgFIQAgCAEEoSAEAAQhgCAUhACAIAQQhIIQABCEAIJQEAIAghBAEApCAEAQAoIQQQgACEJAECIIAQBBCAhCBCEAIAgBQYggBAAEISAIBSEAgCAEBKEgBAAQhIAgFIQAAIIQEISCEAAQhACCUBACAIIQQBAKQgBAEAIIQkEIAAhCAEEoCAEAQQggCAUhACAIAQShIAQABCGAIBSEAIAgBBCEghAAEIQAglAQAgCCEEAQCkIAQBACCEJBCAAIQgBBKAgBAEEIIAgFIQAAAIIQAAAAQQgAAIAgBAAAQBACAAAgCAEAABCEAAAAghAAAABBCAAAgCAEAABAEAIAACAIAQAAEIQAAAAIQgAAAAQhAAAAghAAAABBCAAAgCAEAABAEAIAACAIAQAAEIQAAAAIQgAAAAQhAAAAghAAAABBCAAAgCAEAABAEAIAACAIAQAAEIQAAAAIQgAAAAQhAACAIAQAAEAQAgAAIAgBAAAQhAAAAAhCAAAABCEAAACCEAAAAEEIAACAIAQAAEAQAgAAIAgBAAAQhAAAAAhCAAAABCEAAACCEAAAAEEIAACAIAQAAEAQAgAAIAgBAAAQhAAAAAhCAAAABCEAAACCEAAAQBACAAAgCAEAABCEAAAACEIAAAAEIQAAAIIQAAAAQQgAAIAgBAAAQBACAAAgCAEAABCEAAAACEIAAAAEIQAAAIIQAAAAQQgAAIAgBAAAQBACAAAgCAEAABCEAAAACEIAAAAEIQAAAIIQAAAAQQgAACAITQAAACAIAQAAEIQAAAAIQgAAAAQhAAAAghAAAABBCAAAgCAEAABAEAIAACAIAQAAEIQAAAAIQgAAAAQhAAAAghAAAABBCAAAgCAEAABAEAIAACAIAQAAEIQAAAAIQgAAAAQhAAAAghAAAABBCAAAgCAEAAAQhAAAAAhCAAAABCEAAACCEAAAAEEIAACAIAQAAEAQAgAAIAgBAAAQhAAAAAhCAAAABCEAAACCEAAAAEEIAACAIAQAAEAQAgAAIAgBAAAQhAAAAAhCAAAABCEAAACCEAAAAEEIAACAIAQAAEAQAgAACEIAAAAEIQAAAIIQAAAAQQgAAIAgBAAAQBACAAAgCAEAABCEAAAACEIAAAAEIQAAAIIQAAAAQQgAAIAgBAAAQBACAAAgCAEAABCEAAAACEIAAAAEIQAAAIIQAAAAQQgAAIAgBAAAQBACAAAgCAEAABCEAAAAghAAAABBCAAAgCAEAABAEAIAACAIAQAAEIQAAAAIQgAAAAQhAAAAghAAAABBCAAAgCAEAABAEAIAACAIAQAAEIQAAAAIQgAAAAQhAAAAghAAAABBCAAAgCAEAABAEAIAACAIAQAAEIQAAAAIQgAAAEEIAACAIAQAAEAQAgAAIAgBAAAQhAAAAAhCAAAABCEAAACCEAAAAEEIAACAIAQAAEAQAgAAIAgBAAAQhAAAAAhCAAAABCEAAACCEAAAAEEIAACAIAQAAEAQAgAAIAgBAAAQhAAAAAhCAAAABCEAAACCEAAAQBACAAAgCAEAABCEAAAACEIAAAAEIQAAAIIQAAAAQQgAAIAgBAAAQBACAAAgCAEAABCEAAAACEIAAAAEIQAAAIIQAAAAQQgAAIAgBAAAQBACAAAgCAEAABCEAAAACEIAAAAEIQAAAIIQAAAAQQgAACAIAQAAEIQAAAAIQgAAAAQhAAAAghAAAABBCAAAgCAEAABAEAIAACAIAQAAEIQAAAAIQgAAAAQhAAAAghAAAABBCAAAgCAEAABAEAIAACAIAQAAEIQAAAAIQgAAAAQhAAAAghAAAABBCAAAwOsCjWn8ANVVXh8AAAAASUVORK5CYII=';
+  var IMAGE_B = 'data:image/png;base64,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';
+
+  var params = new URLSearchParams(location.search);
+  var useBridge = params.get('bridge') !== '0';
+  var composer = document.querySelector('[data-composer-input]');
+  var rail = document.getElementById('rail');
+  var logEl = document.getElementById('log');
+  var checks = [];
+  var attachments = 0;
+
+  function check(name, pass, detail) {
+    checks.push({ name: name, pass: !!pass, detail: detail === undefined ? '' : String(detail) });
+  }
+
+  function out(text) {
+    logEl.textContent += text + '\n';
+  }
+
+  /* ------------------------------ 假 composer ------------------------------ */
+
+  composer.addEventListener('paste', function (event) {
+    var dt = event.clipboardData;
+    var files = dt && dt.files ? Array.prototype.slice.call(dt.files) : [];
+    if (files.length > 0) {
+      event.preventDefault();
+      window.__pastedFiles = (window.__pastedFiles || 0) + 1;
+      files.forEach(function (file) {
+        attachments += 1;
+        window.__lastName = file.name;
+        window.__lastType = file.type;
+        var url = URL.createObjectURL(file);
+        var img = document.createElement('img');
+        img.className = 'rail-thumb';
+        img.src = url;
+        rail.appendChild(img);
+        (function (index) {
+          createImageBitmap(file).then(function (bmp) {
+            var canvas = document.createElement('canvas');
+            canvas.width = bmp.width;
+            canvas.height = bmp.height;
+            var g = canvas.getContext('2d');
+            g.drawImage(bmp, 0, 0);
+            window.__shots = window.__shots || {};
+            window.__shots[index] = {
+              width: bmp.width,
+              height: bmp.height,
+              redCount: countRed(g, bmp.width, bmp.height),
+              atCenter: Array.prototype.slice.call(
+                g.getImageData(Math.round(bmp.width * 0.3), Math.round(bmp.height * 0.4), 1, 1).data
+              )
+            };
+          }).catch(function (error) {
+            window.__shots = window.__shots || {};
+            window.__shots[index] = { error: String(error) };
+          });
+        })(attachments);
+      });
+      return;
+    }
+    var text = dt && dt.getData ? dt.getData('text/plain') : '';
+    if (!text) return;
+    event.preventDefault();
+    window.__pastedText = text;
+    window.__textWrites = (window.__textWrites || 0) + 1;
+    /* 模拟 contenteditable 的粘贴：有选区就覆盖，没选区就在光标处插入 */
+    var selection = window.getSelection();
+    var replaced = false;
+    if (selection && selection.rangeCount > 0 && !selection.isCollapsed && composer.contains(selection.anchorNode)) {
+      selection.getRangeAt(0).deleteContents();
+      replaced = true;
+    }
+    window.__lastTextMode = replaced ? 'replace' : 'insert';
+    document.execCommand('insertText', false, text);
+  });
+
+  /* 稀疏扫全图数红点：用来证明「发出去的是原图，钉没画进去」 */
+  function countRed(g, w, h) {
+    var red = 0;
+    var step = Math.max(1, Math.round(Math.min(w, h) / 200));
+    for (var y = 0; y < h; y += step) {
+      for (var x = 0; x < w; x += step) {
+        var d = g.getImageData(x, y, 1, 1).data;
+        if (d[0] > 150 && d[1] < 130 && d[2] < 130) red++;
+      }
+    }
+    return red;
+  }
+
+  /* ------------------------------ 假宿主 ctx ------------------------------ */
+
+  var actions = {
+    setDraft: function (text) {
+      window.__setDraftCalls = (window.__setDraftCalls || 0) + 1;
+      window.__lastTextMode = 'setDraft';
+      composer.textContent = text;
+    },
+    addAttachments: function () { return true; }
+  };
+
+  var scope = {
+    slots: {
+      inject: function (name, callback) {
+        if (useBridge) callback();
+      },
+      register: function (options, component) {
+        if (useBridge) component({ sessionId: 'fixture-session', inputActions: actions });
+        return function () {};
+      }
+    }
+  };
+
+  var ctx = {
+    effect: function (fn) { window.__effects.push(fn()); },
+    inject: function (deps, callback) { if (useBridge) callback(scope); },
+    get: function () { return undefined; }
+  };
+
+  /* ------------------------------ 工具 ------------------------------ */
+
+  function sleep(ms) {
+    return new Promise(function (resolve) { setTimeout(resolve, ms); });
+  }
+
+  function waitFor(predicate, timeoutMs, label) {
+    var started = Date.now();
+    return new Promise(function (resolve) {
+      (function poll() {
+        var value = false;
+        try { value = predicate(); } catch (error) { value = false; }
+        if (value) return resolve(true);
+        if (Date.now() - started > (timeoutMs || 5000)) {
+          out('timeout waiting for ' + (label || 'condition'));
+          return resolve(false);
+        }
+        setTimeout(poll, 40);
+      })();
+    });
+  }
+
+  function openLightbox(src, width, height) {
+    var dialog = document.createElement('div');
+    dialog.setAttribute('role', 'dialog');
+    dialog.setAttribute('aria-modal', 'true');
+    dialog.id = 'lb';
+    dialog.style.cssText = 'position:fixed;inset:0;display:grid;place-items:center;z-index:10;background:rgba(12,14,20,.66)';
+    var mask = document.createElement('div');
+    mask.setAttribute('aria-hidden', 'true');
+    dialog.appendChild(mask);
+    var img = document.createElement('img');
+    img.id = 'shot';
+    img.src = src;
+    img.style.cssText = 'position:relative;width:' + width + 'px;height:' + height + 'px;object-fit:contain;' +
+      'border-radius:12px;background:#fff';
+    dialog.appendChild(img);
+    var close = document.createElement('button');
+    close.id = 'lb-close';
+    close.textContent = '×';
+    close.style.cssText = 'position:absolute;top:18px;right:18px;width:32px;height:32px;border-radius:999px;' +
+      'border:0;background:#fff;font-size:16px';
+    close.addEventListener('click', function () { dialog.remove(); });
+    dialog.appendChild(close);
+    document.body.appendChild(dialog);
+  }
+
+  function annotator() {
+    var registry = window.__dshImagePinComment;
+    return registry && registry.annotators.length > 0 ? registry.annotators[0] : null;
+  }
+
+  async function waitAnnotator() {
+    var ok = await waitFor(function () { return annotator() !== null; }, 5000, 'annotator');
+    await sleep(120);
+    return ok;
+  }
+
+  function tap(fx, fy) {
+    var canvas = document.querySelector('.dpc-canvas');
+    var img = document.getElementById('shot');
+    var rect = img.getBoundingClientRect();
+    var opts = {
+      clientX: rect.left + rect.width * fx,
+      clientY: rect.top + rect.height * fy,
+      bubbles: true, cancelable: true, composed: true,
+      pointerId: 1, pointerType: 'mouse', button: 0, buttons: 1, isPrimary: true
+    };
+    canvas.dispatchEvent(new PointerEvent('pointerdown', opts));
+    canvas.dispatchEvent(new PointerEvent('pointerup', opts));
+  }
+
+  function typeAndEnter(text) {
+    var textarea = document.querySelector('.dpc-pop textarea');
+    textarea.value = text;
+    textarea.dispatchEvent(new Event('input', { bubbles: true }));
+    textarea.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true, cancelable: true, composed: true }));
+  }
+
+  function enterAnnotateMode() {
+    document.querySelector('.dpc-bar .dpc-btn').click();
+  }
+
+  async function insertAndWait() {
+    var before = (window.__textWrites || 0) + (window.__setDraftCalls || 0);
+    document.querySelector('.dpc-primary').click();
+    var ok = await waitFor(function () {
+      return (window.__textWrites || 0) + (window.__setDraftCalls || 0) > before && document.getElementById('lb') === null;
+    }, 8000, 'insert');
+    await sleep(150);
+    return ok;
+  }
+
+  function draft() {
+    return composer.textContent || '';
+  }
+
+  /* ------------------------------ 场景 ------------------------------ */
+
+  window.__pinPlugin.apply(ctx);
+  window.__fixtureApplied = true;
+
+  async function run() {
+    out('plugin applied, bridge=' + useBridge);
+
+    /* ---------- A：第一张图，两个锚点 ---------- */
+    openLightbox(IMAGE_A, 600, 400);
+    check('预览上挂上了标注层', await waitAnnotator());
+
+    enterAnnotateMode();
+    tap(0.3, 0.4);
+    typeAndEnter('这个按钮往左挪 8px');
+    tap(0.7, 0.65);
+    typeAndEnter('这里文字重叠了');
+    await sleep(80);
+
+    var annA = annotator().state;
+    check('两个锚点都记下了', annA.pins.length === 2, 'pins=' + annA.pins.length);
+    check('第一次回车只确认备注、不发送',
+      annA.pins[0].note === '这个按钮往左挪 8px' && !window.__textWrites && !window.__pastedFiles);
+
+    /* 屏幕叠加层：环上有颜色、锚点中心保持透明（不挡被指的字） */
+    var canvas = document.querySelector('.dpc-canvas');
+    var g = canvas.getContext('2d');
+    var scale = canvas.width / annA.natural.w;
+    var pin = annA.pins[0];
+    var radius = Math.min(44, Math.max(9, Math.min(annA.natural.w, annA.natural.h) * 0.016));
+    var cx = Math.round(pin.x * scale);
+    var cy = Math.round(pin.y * scale);
+    var centerPixel = Array.prototype.slice.call(g.getImageData(cx, cy, 1, 1).data);
+    var ringPixel = Array.prototype.slice.call(g.getImageData(Math.round(cx + radius * scale), cy, 1, 1).data);
+    check('锚点中心透明（十字准星留空，不遮字）', centerPixel[3] === 0, 'rgba=' + centerPixel.join(','));
+    check('图钉画成空心环', ringPixel[0] > 130 && ringPixel[1] < 150, 'rgba=' + ringPixel.join(','));
+
+    composer.textContent = '这两个地方怎么改？';
+    check('插入第一张图成功', await insertAndWait());
+
+    var draftA = draft();
+    check('发出去的是 1 张附件', attachments === 1, 'attachments=' + attachments);
+    check('附件名按图像编号命名 image-1-*', /^image-1-\d{8}-\d{6}\.png$/.test(String(window.__lastName)), window.__lastName);
+    check('坐标块带图像编号与原图尺寸', draftA.indexOf('【图片标注】图像 1（1200×800）锚点 2 处，附件 image-1-') >= 0);
+    check('锚点行含 百分比 + 像素 + 容差 + 裁切框',
+      /1\. \(x: 30\.0%, y: 40\.0% \| px 360,320 \| ±13px \| 裁切 \d+,\d+,\d+,\d+\) 这个按钮往左挪 8px/.test(draftA),
+      (draftA.split('\n')[2] || ''));
+    check('第二条锚点也在', draftA.indexOf('2. (x: 70.0%, y: 65.0% |') >= 0);
+    check('用户自己写的问题保留在最前面', draftA.indexOf('这两个地方怎么改？') === 0);
+
+    await waitFor(function () { return window.__shots && window.__shots[1]; }, 3000, 'shot1');
+    var shot1 = window.__shots[1];
+    check('附件保持原图分辨率 1200×800', shot1.width === 1200 && shot1.height === 800, shot1.width + '×' + shot1.height);
+    check('附件是原图：整张图没有一个红点', shot1.redCount === 0, '红点=' + shot1.redCount);
+    check('附件是原图：锚点位置像素没被覆盖', shot1.atCenter.join(',') === '246,246,246,255', 'rgba=' + shot1.atCenter.join(','));
+
+    /* ---------- B：第二张图，一个锚点 ---------- */
+    openLightbox(IMAGE_B, 600, 400);
+    check('第二张图也能挂上标注层', await waitAnnotator());
+    enterAnnotateMode();
+    tap(0.5, 0.5);
+    typeAndEnter('这张图的标题要加粗');
+    await sleep(80);
+    check('第二张图插入成功', await insertAndWait());
+
+    var draftB = draft();
+    check('第二张图是 image-2 且附件数变 2', attachments === 2 && /^image-2-/.test(String(window.__lastName)),
+      attachments + ' / ' + window.__lastName);
+    check('第二张图独立编号：图像 2（900×600）锚点 1 处', draftB.indexOf('图像 2（900×600）锚点 1 处') >= 0);
+    check('第二张图的锚点从 1 重新开始', draftB.indexOf('1. (x: 50.0%, y: 50.0%') >= 0);
+    check('第一张图的块还在', draftB.indexOf('图像 1（1200×800）锚点 2 处') >= 0);
+
+    /* ---------- C：同一张图再打开 —— 预载 + 就地更新 ---------- */
+    openLightbox(IMAGE_B, 600, 400);
+    await waitAnnotator();
+    var annC = annotator().state;
+    check('再次打开同一张图时预载了旧锚点',
+      annC.pins.length === 1 && annC.pins[0].note === '这张图的标题要加粗', 'pins=' + annC.pins.length);
+    enterAnnotateMode();
+    tap(0.25, 0.75);
+    typeAndEnter('这里再加一条');
+    await sleep(80);
+    check('同一张图再次插入成功', await insertAndWait());
+
+    var draftC = draft();
+    check('同一张图不重复插附件（仍是 2 张）', attachments === 2, 'attachments=' + attachments);
+    check('图像 2 的块就地更新成 2 处锚点', draftC.indexOf('图像 2（900×600）锚点 2 处') >= 0);
+    check('图像 2 的编号继续 1、2',
+      draftC.indexOf('1. (x: 50.0%, y: 50.0%') >= 0 && draftC.indexOf('2. (x: 25.0%, y: 75.0%') >= 0);
+    check('图像 2 只出现一次（旧块被替换，不是追加）',
+      draftC.split('图像 2（900×600）').length - 1 === 1,
+      '出现 ' + (draftC.split('图像 2（900×600）').length - 1) + ' 次');
+
+    /* ---------- D：图已经在输入框里 —— 只补块，不重复插 ---------- */
+    var attachedSrc = rail.querySelector('img').src;
+    openLightbox(attachedSrc, 600, 400);
+    await waitAnnotator();
+    enterAnnotateMode();
+    tap(0.15, 0.2);
+    typeAndEnter('这张是输入框里原本就有的');
+    await sleep(80);
+    check('已在输入框的图插入成功', await insertAndWait());
+
+    var draftD = draft();
+    check('已在输入框的图不重复插附件', attachments === 2, 'attachments=' + attachments);
+    check('块里注明「已在输入框中」并继续编号为图像 3',
+      draftD.indexOf('图像 3（1200×800）锚点 1 处，已在输入框中') >= 0, draftD.slice(-200));
+
+    var failed = checks.filter(function (item) { return !item.pass; });
+    window.__testResult = {
+      ok: failed.length === 0,
+      bridge: useBridge,
+      passed: checks.length - failed.length,
+      total: checks.length,
+      checks: checks
+    };
+    out('done: ' + (window.__testResult.ok ? 'PASS' : 'FAIL'));
+  }
+
+  if (params.get('auto') === '0') {
+    out('plugin applied, bridge=' + useBridge + ' (auto scenario disabled)');
+    window.__testResult = { ok: true, bridge: useBridge, passed: 0, total: 0, checks: [], skipped: true };
+    return;
+  }
+
+  run().catch(function (error) {
+    window.__testResult = {
+      ok: false,
+      bridge: useBridge,
+      passed: checks.filter(function (item) { return item.pass; }).length,
+      total: checks.length + 1,
+      checks: checks.concat([{ name: 'scenario crashed', pass: false, detail: String((error && error.stack) || error) }])
+    };
+    out('crashed: ' + error);
+  });
+})();
+</script>
+</body>
+</html>

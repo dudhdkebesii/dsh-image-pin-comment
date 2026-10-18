@@ -1,0 +1,39 @@
+name: release
+
+# 打 v* tag 时：
+#   1. 打成 tarball 附件挂到 Release 上 —— 文件名**不带版本号**，
+#      这样 .../releases/latest/download/dsh-image-pin-comment.tgz 永远不会 404；
+#   2. 如果仓库配了 NPM_TOKEN secret，同时发布到 npm（插件市场的一键安装只认 npm）。
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: 语法检查
+        run: npm run check
+      - name: 打 tarball
+        run: |
+          npm pack
+          mv dsh-image-pin-comment-*.tgz dsh-image-pin-comment.tgz
+      - name: 发布到 GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dsh-image-pin-comment.tgz
+          generate_release_notes: true
+      - name: 发布到 npm（有 token 才跑）
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        if: env.NODE_AUTH_TOKEN != ''
+        run: |
+          echo "//registry.npmjs.org/:_authToken=${NODE_AUTH_TOKEN}" > .npmrc
+          npm publish --access public
