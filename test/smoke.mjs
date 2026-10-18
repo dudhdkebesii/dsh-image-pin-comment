@@ -115,12 +115,21 @@ async function runScenario(bridge) {
       `--user-data-dir=${profileDir}`,
       url
     ],
-    { stdio: 'ignore' }
+    { stdio: ['ignore', 'ignore', 'pipe'] }
   );
+  let chromeStderr = '';
+  child.stderr?.on('data', (chunk) => {
+    chromeStderr = (chromeStderr + String(chunk)).slice(-4000);
+  });
+  child.on('exit', (code, signal) => {
+    if (code !== 0 && code !== null) {
+      console.error(`Chrome 退出：code=${code} signal=${signal}\n${chromeStderr}`);
+    }
+  });
 
   let cdp;
   try {
-    const [port] = (await waitForFile(join(profileDir, 'DevToolsActivePort'), 15000)).split('\n');
+    const [port] = (await waitForFile(join(profileDir, 'DevToolsActivePort'), 20000)).split('\n');
     let targets = [];
     for (let attempt = 0; attempt < 60; attempt++) {
       try {
