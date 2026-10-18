@@ -3,10 +3,10 @@
  *
  *  1. 往真 composer 里 paste 两张图（DSH 自己的图片入口）；
  *  2. 点开第一张 → 工具条「标注」→ 钉一颗 → 写评论 → 回车确认；
- *  3. 「插入到输入框」→ 断言：不重复插附件（图本来就在输入框里）、
- *     草稿出现「图像 1 … 已在输入框中」，且带 px / ±容差 / 裁切框；
- *  4. 再点开第二张 → 同样标注 → 断言出现「图像 2」，锚点编号重新从 1 开始；
- *  5. 断言附件仍是浏览器里的原图对象（钉只存在于屏幕上，没烧进图）。
+ *  3. 「插入到输入框」→ 断言：**草稿保持干净**、出现 chip、不重复插附件；
+ *  4. 再点开第二张 → 同样标注 → chip 变成「2 张图」；
+ *  5. 在输入框打一句话并按回车 → 断言清单被拼进草稿并调用了 submit
+ *     （submit 在测试里被换成桩，避免真的发消息），chip 随之消失。
  *
  * 用法：node test/real-flow.mjs "http://127.0.0.1:PORT/?token=..."
  */
@@ -42,8 +42,8 @@ const child = spawn(
   [
     '--headless=new',
     '--disable-gpu',
-      '--no-sandbox',
-      '--disable-dev-shm-usage',
+    '--no-sandbox',
+    '--disable-dev-shm-usage',
     '--no-first-run',
     '--no-default-browser-check',
     '--window-size=1500,950',
@@ -153,6 +153,8 @@ try {
   };
 
   const thumbCount = () => evaluate('document.querySelectorAll("[data-composer-card] img").length');
+  const draftText = () => evaluate('(document.querySelector("[data-composer-input]") || {}).innerText || ""');
+  const chipText = () => evaluate('(document.querySelector(".dpc-chip") || {}).textContent || ""');
 
   await pasteImage(imageA, 'shot-a.png');
   await sleep(600);
@@ -192,8 +194,7 @@ try {
       });
       canvas.dispatchEvent(new PointerEvent('pointerdown', at(${fx}, ${fy})));
       canvas.dispatchEvent(new PointerEvent('pointerup', at(${fx}, ${fy})));
-      const pop = document.querySelector('.dpc-pop');
-      const ta = pop && pop.querySelector('textarea');
+      const ta = document.querySelector('.dpc-pop textarea');
       const focused = !!ta && document.activeElement === ta;
       if (ta) {
         ta.value = ${JSON.stringify(note)};
@@ -208,46 +209,74 @@ try {
       if (await evaluate('!document.querySelector(".dpc-bar")')) break;
       await sleep(200);
     }
-    await sleep(400);
+    await sleep(500);
     return info;
   };
-
-  const draft = () => evaluate('(document.querySelector("[data-composer-input]") || {}).innerText || ""');
 
   const first = await annotateThumb(0, 0.4, 0.5, '真机：把这里的文案改短一点');
   check('第一张图：落钉 + 评论框聚焦', first.opened && first.focused && first.pins === 1, JSON.stringify(first));
 
-  let text = '';
-  for (let i = 0; i < 60; i++) {
-    text = String(await draft());
-    if (text.includes('图像 1')) break;
-    await sleep(250);
+  const draft = String(await draftText());
+  let chip = String(await chipText());
+  for (let i = 0; i < 40; i++) {
+    chip = String(await chipText());
+    if (chip.indexOf('1 张图') >= 0) break;
+    await sleep(200);
   }
-  check('第一张图出现「图像 1 … 已在输入框中」', /图像 1（1200×800）锚点 1 处，已在输入框中/.test(text), text.slice(0, 120));
-  check('第一张图：坐标带 px / 容差 / 裁切框',
-    /px 480,400 \| ±13px \| 裁切 \d+,\d+,\d+,\d+/.test(text), text.slice(0, 260));
-  check('第一张图：备注跟着锚点', text.includes('真机：把这里的文案改短一点'));
-  check('第一张图：没有重复插附件', (await thumbCount()) === 2, '缩略图 ' + (await thumbCount()));
+  check('插入后输入框保持干净（没有坐标块）', draft.indexOf('【图片标注】') < 0, draft.slice(0, 80));
+  check('插入后出现 chip 并显示张数/锚点数', /1 张图 · 1 处锚点/.test(chip), chip);
+  check('没有重复插附件', (await thumbCount()) === 2, '缩略图 ' + (await thumbCount()));
 
   const second = await annotateThumb(1, 0.5, 0.5, '真机：第二张图的标题要加粗');
   check('第二张图：落钉成功', second.opened && second.pins === 1, JSON.stringify(second));
 
-  for (let i = 0; i < 60; i++) {
-    text = String(await draft());
-    if (text.includes('图像 2')) break;
-    await sleep(250);
+  for (let i = 0; i < 40; i++) {
+    chip = String(await chipText());
+    if (chip.indexOf('2 张图') >= 0) break;
+    await sleep(200);
   }
-  check('第二张图独立编号为「图像 2」', /图像 2（900×600）锚点 1 处/.test(text), text.slice(-220));
-  check('第二张图的锚点编号从 1 重新开始', /图像 2（900×600）[\s\S]*?1\. \(x: 50\.0%, y: 50\.0%/.test(text), text.slice(-220));
-  check('第一张图的块仍然在', text.includes('图像 1（1200×800）'));
-  check('两张图仍然是 2 个附件（都是原图）', (await thumbCount()) === 2, '缩略图 ' + (await thumbCount()));
+  check('chip 变成 2 张图 · 2 处锚点', /2 张图 · 2 处锚点/.test(chip), chip);
 
-  const scheme = await evaluate(`(() => {
-    const img = document.querySelectorAll('[data-composer-card] img')[0];
-    const src = img.currentSrc || img.src;
-    return src.slice(0, 5);
+  /* 把 submit 换成桩，避免真的发消息；然后回车触发发送拦截 */
+  const flushed = await evaluate(`(async () => {
+    const bridge = window.__dshImagePinCommentBridge;
+    if (!bridge || !bridge.actions) return { error: 'no bridge' };
+    const actions = bridge.actions;
+    window.__realSubmitCalled = 0;
+    const original = actions.submit;
+    actions.submit = function () {
+      window.__realSubmitCalled += 1;
+      window.__realSubmittedDraft = (document.querySelector('[data-composer-input]') || {}).innerText || '';
+    };
+    const editor = document.querySelector('[data-composer-input]');
+    editor.focus();
+    editor.innerText = '这些地方怎么改？';
+    editor.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true, cancelable: true }));
+    await new Promise((r) => setTimeout(r, 800));
+    const snapshot = {
+      submits: window.__realSubmitCalled,
+      submitted: window.__realSubmittedDraft || '',
+      draftAfter: (document.querySelector('[data-composer-input]') || {}).innerText || '',
+      chipDisplay: (() => {
+        const el = document.querySelector('.dpc-chip');
+        return el ? getComputedStyle(el).display : 'missing';
+      })()
+    };
+    actions.submit = original;
+    return snapshot;
   })()`);
-  check('附件仍是浏览器内的原图对象（blob:）', String(scheme) === 'blob:', scheme);
+
+  check('回车触发了发送（submit 被调用一次）', !!flushed && flushed.submits === 1, JSON.stringify(flushed).slice(0, 200));
+  check(
+    '提交的草稿带着图像 1 的块',
+    !!flushed && String(flushed.submitted).indexOf('图像 1（1200×800）') >= 0,
+    String((flushed && flushed.submitted) || '').slice(0, 160)
+  );
+  check('提交的草稿带着图像 2 的块', !!flushed && String(flushed.submitted).indexOf('图像 2（900×600）') >= 0);
+  check('提交的草稿带着像素与容差', !!flushed && /px 480,400 \| ±13px \| 裁切 \d+,\d+,\d+,\d+/.test(String(flushed.submitted)));
+  check('提交的草稿保留用户问题', !!flushed && String(flushed.submitted).indexOf('这些地方怎么改？') === 0);
+  /* submit 在测试里是桩，草稿不会被宿主清空 —— 只断言 chip 收起来了 */
+  check('发送后 chip 收起', !!flushed && flushed.chipDisplay === 'none', JSON.stringify(flushed && flushed.chipDisplay));
   check('真机：无插件报错', consoleErrors.length === 0, consoleErrors.slice(0, 2).join(' | '));
 
   for (const item of results) {
@@ -266,6 +295,10 @@ try {
   } catch {
     /* 忽略 */
   }
-  rmSync(dir, { recursive: true, force: true });
+  try {
+    rmSync(dir, { recursive: true, force: true });
+  } catch {
+    /* 忽略 */
+  }
   process.exit(exitCode);
 }

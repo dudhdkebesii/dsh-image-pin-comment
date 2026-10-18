@@ -1,6 +1,6 @@
 {
   "name": "dsh-image-pin-comment",
-  "version": "0.2.1",
+  "version": "0.3.0",
   "description": "Pin-and-comment annotation for the DeepSeek Harness image lightbox: drop numbered pins, type a note, and the original image plus a coordinate list lands in the composer. 图片图钉标注：在图片上钉图钉写评论，自动生成带坐标的说明一起发出去。",
   "type": "module",
   "main": "lib/index.js",

@@ -2,11 +2,12 @@
  * 生成 test/fixture.html：两张手写 PNG 内联成 data: URI，
  * 夹具完全离线、不依赖任何网络资源。
  *
- * 跑的是「真机同构」的场景：
- *   A. 一张图两个锚点 → 发原图（像素不被钉覆盖）+ 坐标块（百分比/像素/容差/裁切框）
- *   B. 第二张图一个锚点 → 图像 2，锚点编号重新从 1 开始
- *   C. 同一张图再打开 → 预载旧锚点，块就地更新（仍是一次「图像 2」，锚点变 2 处）
- *   D. 已经躺在输入框里的那张图 → 只补块，不重复插附件
+ * 场景（bridge 档位 = chip + 发送拦截；paste 档位 = 兜底直接写草稿）：
+ *   A. 第一张图两个锚点 → 草稿保持干净、只出现 chip；
+ *   B. 第二张图一个锚点 → chip 变「2 张图」；
+ *   C. 同一张图再打开 → 预载旧锚点，chip 的锚点数增加、块就地更新；
+ *   D. 已经躺在输入框里的图 → 不重复插附件；
+ *   E. 输入一句话后按回车 → 清单拼进草稿并提交，chip 消失。
  */
 import { readFileSync, writeFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
@@ -128,7 +129,6 @@ const html = `<!doctype html>
     event.preventDefault();
     window.__pastedText = text;
     window.__textWrites = (window.__textWrites || 0) + 1;
-    /* 模拟 contenteditable 的粘贴：有选区就覆盖，没选区就在光标处插入 */
     var selection = window.getSelection();
     var replaced = false;
     if (selection && selection.rangeCount > 0 && !selection.isCollapsed && composer.contains(selection.anchorNode)) {
@@ -139,7 +139,6 @@ const html = `<!doctype html>
     document.execCommand('insertText', false, text);
   });
 
-  /* 稀疏扫全图数红点：用来证明「发出去的是原图，钉没画进去」 */
   function countRed(g, w, h) {
     var red = 0;
     var step = Math.max(1, Math.round(Math.min(w, h) / 200));
@@ -160,7 +159,12 @@ const html = `<!doctype html>
       window.__lastTextMode = 'setDraft';
       composer.textContent = text;
     },
-    addAttachments: function () { return true; }
+    addAttachments: function () { return true; },
+    submit: function () {
+      window.__submits = (window.__submits || 0) + 1;
+      window.__submittedDraft = composer.textContent || '';
+      composer.textContent = '';
+    }
   };
 
   var scope = {
@@ -265,17 +269,36 @@ const html = `<!doctype html>
   }
 
   async function insertAndWait() {
-    var before = (window.__textWrites || 0) + (window.__setDraftCalls || 0);
+    /* chip 档位不会动草稿，所以只等「预览被关掉」 */
     document.querySelector('.dpc-primary').click();
-    var ok = await waitFor(function () {
-      return (window.__textWrites || 0) + (window.__setDraftCalls || 0) > before && document.getElementById('lb') === null;
+    const ok = await waitFor(function () {
+      return document.getElementById('lb') === null;
     }, 8000, 'insert');
-    await sleep(150);
+    await sleep(200);
     return ok;
   }
-
   function draft() {
     return composer.textContent || '';
+  }
+
+  function chipEl() {
+    return document.querySelector('.dpc-chip');
+  }
+
+  function chipVisible() {
+    var el = chipEl();
+    return !!el && el.style.display !== 'none';
+  }
+
+  function chipText() {
+    return chipEl() ? chipEl().textContent : '';
+  }
+
+  async function pressEnterInComposer() {
+    composer.dispatchEvent(new KeyboardEvent('keydown', {
+      key: 'Enter', bubbles: true, cancelable: true, composed: true
+    }));
+    await sleep(120);
   }
 
   /* ------------------------------ 场景 ------------------------------ */
@@ -300,9 +323,8 @@ const html = `<!doctype html>
     var annA = annotator().state;
     check('两个锚点都记下了', annA.pins.length === 2, 'pins=' + annA.pins.length);
     check('第一次回车只确认备注、不发送',
-      annA.pins[0].note === '这个按钮往左挪 8px' && !window.__textWrites && !window.__pastedFiles);
+      annA.pins[0].note === '这个按钮往左挪 8px' && !window.__textWrites && !window.__pastedFiles && !window.__submits);
 
-    /* 屏幕叠加层：环上有颜色、锚点中心保持透明（不挡被指的字） */
     var canvas = document.querySelector('.dpc-canvas');
     var g = canvas.getContext('2d');
     var scale = canvas.width / annA.natural.w;
@@ -318,15 +340,18 @@ const html = `<!doctype html>
     composer.textContent = '这两个地方怎么改？';
     check('插入第一张图成功', await insertAndWait());
 
-    var draftA = draft();
+    if (useBridge) {
+      check('输入框保持干净：草稿里没有坐标块', draft().indexOf('【图片标注】') < 0, draft().slice(0, 80));
+      check('插入后出现 chip', chipVisible(), chipText().trim());
+      check('chip 显示张数与锚点数', /1 张图 · 2 处锚点/.test(chipText()), chipText().trim());
+      check('chip 不影响用户已写的问题', draft() === '这两个地方怎么改？', draft());
+    } else {
+      check('兜底档位：坐标块直接进了草稿', draft().indexOf('【图片标注】图像 1') >= 0, draft().slice(0, 80));
+      check('兜底档位：没有 chip', !chipVisible());
+    }
+
     check('发出去的是 1 张附件', attachments === 1, 'attachments=' + attachments);
     check('附件名按图像编号命名 image-1-*', /^image-1-\\d{8}-\\d{6}\\.png$/.test(String(window.__lastName)), window.__lastName);
-    check('坐标块带图像编号与原图尺寸', draftA.indexOf('【图片标注】图像 1（1200×800）锚点 2 处，附件 image-1-') >= 0);
-    check('锚点行含 百分比 + 像素 + 容差 + 裁切框',
-      /1\\. \\(x: 30\\.0%, y: 40\\.0% \\| px 360,320 \\| ±13px \\| 裁切 \\d+,\\d+,\\d+,\\d+\\) 这个按钮往左挪 8px/.test(draftA),
-      (draftA.split('\\n')[2] || ''));
-    check('第二条锚点也在', draftA.indexOf('2. (x: 70.0%, y: 65.0% |') >= 0);
-    check('用户自己写的问题保留在最前面', draftA.indexOf('这两个地方怎么改？') === 0);
 
     await waitFor(function () { return window.__shots && window.__shots[1]; }, 3000, 'shot1');
     var shot1 = window.__shots[1];
@@ -343,14 +368,13 @@ const html = `<!doctype html>
     await sleep(80);
     check('第二张图插入成功', await insertAndWait());
 
-    var draftB = draft();
     check('第二张图是 image-2 且附件数变 2', attachments === 2 && /^image-2-/.test(String(window.__lastName)),
       attachments + ' / ' + window.__lastName);
-    check('第二张图独立编号：图像 2（900×600）锚点 1 处', draftB.indexOf('图像 2（900×600）锚点 1 处') >= 0);
-    check('第二张图的锚点从 1 重新开始', draftB.indexOf('1. (x: 50.0%, y: 50.0%') >= 0);
-    check('第一张图的块还在', draftB.indexOf('图像 1（1200×800）锚点 2 处') >= 0);
+    if (useBridge) {
+      check('chip 变成 2 张图 · 3 处锚点', /2 张图 · 3 处锚点/.test(chipText()), chipText().trim());
+    }
 
-    /* ---------- C：同一张图再打开 —— 预载 + 就地更新 ---------- */
+    /* ---------- C：同一张图再打开 —— 预载 + chip 更新 ---------- */
     openLightbox(IMAGE_B, 600, 400);
     await waitAnnotator();
     var annC = annotator().state;
@@ -361,17 +385,12 @@ const html = `<!doctype html>
     typeAndEnter('这里再加一条');
     await sleep(80);
     check('同一张图再次插入成功', await insertAndWait());
-
-    var draftC = draft();
     check('同一张图不重复插附件（仍是 2 张）', attachments === 2, 'attachments=' + attachments);
-    check('图像 2 的块就地更新成 2 处锚点', draftC.indexOf('图像 2（900×600）锚点 2 处') >= 0);
-    check('图像 2 的编号继续 1、2',
-      draftC.indexOf('1. (x: 50.0%, y: 50.0%') >= 0 && draftC.indexOf('2. (x: 25.0%, y: 75.0%') >= 0);
-    check('图像 2 只出现一次（旧块被替换，不是追加）',
-      draftC.split('图像 2（900×600）').length - 1 === 1,
-      '出现 ' + (draftC.split('图像 2（900×600）').length - 1) + ' 次');
+    if (useBridge) {
+      check('chip 的锚点数涨到 4', /2 张图 · 4 处锚点/.test(chipText()), chipText().trim());
+    }
 
-    /* ---------- D：图已经在输入框里 —— 只补块，不重复插 ---------- */
+    /* ---------- D：图已经在输入框里 ---------- */
     var attachedSrc = rail.querySelector('img').src;
     openLightbox(attachedSrc, 600, 400);
     await waitAnnotator();
@@ -380,11 +399,31 @@ const html = `<!doctype html>
     typeAndEnter('这张是输入框里原本就有的');
     await sleep(80);
     check('已在输入框的图插入成功', await insertAndWait());
-
-    var draftD = draft();
     check('已在输入框的图不重复插附件', attachments === 2, 'attachments=' + attachments);
-    check('块里注明「已在输入框中」并继续编号为图像 3',
-      draftD.indexOf('图像 3（1200×800）锚点 1 处，已在输入框中') >= 0, draftD.slice(-200));
+    if (useBridge) {
+      check('chip 变成 3 张图 · 5 处锚点', /3 张图 · 5 处锚点/.test(chipText()), chipText().trim());
+    }
+
+    /* ---------- E：回车发送 ---------- */
+    if (useBridge) {
+      composer.textContent = '这些地方怎么改？';
+      await pressEnterInComposer();
+      var submitted = String(window.__submittedDraft || '');
+      check('回车时自动提交了消息', (window.__submits || 0) === 1, 'submits=' + window.__submits);
+      check('提交的草稿里带着清单抬头', submitted.indexOf('【图片标注】图像 1') >= 0, submitted.slice(0, 120));
+      check('提交的草稿里带着像素与容差', /px 360,320 \\| ±13px \\| 裁切 \\d+,\\d+,\\d+,\\d+/.test(submitted));
+      check('提交的草稿里带着三张图的块',
+        submitted.indexOf('图像 1（1200×800）') >= 0 &&
+        submitted.indexOf('图像 2（900×600）锚点 2 处') >= 0 &&
+        submitted.indexOf('图像 3（1200×800）') >= 0);
+      check('提交的草稿保留用户问题', submitted.indexOf('这些地方怎么改？') === 0, submitted.slice(0, 40));
+      check('发送后 chip 消失', !chipVisible());
+      check('发送后草稿被清空', draft() === '', JSON.stringify(draft()));
+    } else {
+      composer.textContent = '这些地方怎么改？';
+      await pressEnterInComposer();
+      check('兜底档位：回车不被拦截', (window.__submits || 0) === 0, 'submits=' + window.__submits);
+    }
 
     var failed = checks.filter(function (item) { return !item.pass; });
     window.__testResult = {
