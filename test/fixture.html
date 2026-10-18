@@ -163,7 +163,11 @@
   var ctx = {
     effect: function (fn) { window.__effects.push(fn()); },
     inject: function (deps, callback) { if (useBridge) callback(scope); },
-    get: function () { return undefined; }
+    /* 把界面语言钉成 zh：否则 CI runner 是 en-US，断言里的中文会全挂 */
+    get: function (name) {
+      if (name !== 'locale') return undefined;
+      return { getLocale: function () { return { id: 'zh' }; } };
+    }
   };
 
   /* ------------------------------ 工具 ------------------------------ */
