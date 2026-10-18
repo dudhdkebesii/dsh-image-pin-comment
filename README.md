@@ -68,15 +68,24 @@ cd /path/to/dsh-image-pin-comment
 
 卸载：`./scripts/install-local.sh --remove`。
 
-### B. 走 dsh 插件系统
+### B. 直接从 GitHub 装（推荐，不需要 npm）
 
 ```sh
-# 桌面端：设置 → 插件 → 添加插件 → 填入本机目录路径
-# 或命令行：
-dsh plugin --profile desktop add /path/to/dsh-image-pin-comment
+dsh plugin --profile desktop add github:dudhdkebesii/dsh-image-pin-comment
 ```
 
-### C. 作为 bundle 发布后
+装完重启一次 DSH（profile 的 bundle 组合在启动时展开）。
+要固定版本也可以直接指向 tag：`github:dudhdkebesii/dsh-image-pin-comment#v0.2.0`。
+
+不装 CLI 也行：桌面端 **设置 → 插件 → 添加插件** 里填 `github:dudhdkebesii/dsh-image-pin-comment`。
+
+### C. 从 Release 的 tarball 装（离线/内网）
+
+```sh
+dsh plugin --profile desktop add https://github.com/dudhdkebesii/dsh-image-pin-comment/releases/latest/download/dsh-image-pin-comment.tgz
+```
+
+### D. 从 npm 装（发布后可用）
 
 ```sh
 dsh plugin --profile desktop add dsh-image-pin-comment
