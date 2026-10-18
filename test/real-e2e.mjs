@@ -11,6 +11,11 @@ if (!target) {
   process.exit(2);
 }
 
+if (typeof WebSocket !== 'function') {
+  console.error('需要 Node ≥ 22（内置 WebSocket）才能跑这套 CDP 测试；当前 ' + process.version);
+  process.exit(2);
+}
+
 const { spawn } = await import('node:child_process');
 const { existsSync, mkdtempSync, readFileSync, rmSync } = await import('node:fs');
 const { tmpdir } = await import('node:os');

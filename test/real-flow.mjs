@@ -16,6 +16,11 @@ import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
+if (typeof WebSocket !== 'function') {
+  console.error('需要 Node ≥ 22（内置 WebSocket）才能跑这套 CDP 测试；当前 ' + process.version);
+  process.exit(2);
+}
+
 const here = dirname(fileURLToPath(import.meta.url));
 const target = process.argv[2];
 if (!target) {

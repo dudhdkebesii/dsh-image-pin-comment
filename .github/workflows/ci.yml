@@ -12,7 +12,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
       - name: 语法检查
         run: npm run check
       - name: 冒烟测试（fixture · 真实 Chrome）

@@ -8,6 +8,11 @@ import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 
+if (typeof WebSocket !== 'function') {
+  console.error('需要 Node ≥ 22（内置 WebSocket）才能跑这套 CDP 测试；当前 ' + process.version);
+  process.exit(2);
+}
+
 const here = dirname(fileURLToPath(import.meta.url));
 const root = dirname(here);
 const chrome = process.env.CHROME_PATH || '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome';
