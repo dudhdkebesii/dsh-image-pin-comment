@@ -1,0 +1,18 @@
+# 提交给 https://github.com/awesome-dsh-plugin/awesome-dsh-plugin 的条目
+#
+# 用法：把本文件复制到那个仓库的 data/plugins/dudhdkebesii__dsh-image-pin-comment.yml
+#      （只加这一个文件，README 是脚本生成的，不要手改），然后开 PR。
+#
+# 收录门槛（写在这里免得忘了）：
+#   - package.json 必须声明 dsh.bundle（本仓库有）
+#   - 仓库创建满 1 天（本仓库创建于 2026-10-18，请第二天再提 PR）
+#   - 仓库打了 dsh-plugin topic
+#   - 一个 PR 最多 3 条；描述会被对着代码核，别夸大
+
+url: https://github.com/dudhdkebesii/dsh-image-pin-comment
+name: dudhdkebesii/dsh-image-pin-comment
+category: ui
+description:
+  en: Pin numbered anchors on a DSH image preview, then send the untouched original image together with a coordinate list carrying percentages, pixels, tolerance and a suggested crop box; several images per message keep their own 「image N」 numbering.
+  zh: 在 DSH 图片预览上钉编号锚点，随未改动的原图一起发出坐标清单（百分比、像素、容差、建议裁切框）；一条消息里标注多张图时各自独立编号。
+tarball: https://github.com/dudhdkebesii/dsh-image-pin-comment/releases/latest/download/dsh-image-pin-comment.tgz

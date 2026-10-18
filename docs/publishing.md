@@ -29,7 +29,7 @@ git commit -m "feat: image pin-comment annotation for DSH lightbox"
 # 建仓库（三选一）
 gh repo create dsh-image-pin-comment --public --source=. --remote=origin --push   # 有 gh CLI
 # 或者先在网页建空仓库，再：
-# git remote add origin git@github.com:<owner>/dsh-image-pin-comment.git
+# git remote add origin git@github.com:dudhdkebesii/dsh-image-pin-comment.git
 # git push -u origin main
 ```
 
@@ -84,22 +84,22 @@ DSH 生态目前有四条入口，发布到 npm + 打 topic 之后大部分会�
 | --- | --- | --- |
 | **桌面端内置「插件市场」**（DSH Community Market） | 自动：它读取目录来源（默认 dshfind，可选 1024Store），按 npm `latest` 解析 | 条目要有唯一 npm 包名；npm manifest 必须声明 `dsh.bundle.patch` |
 | **1024Store**（[awesome-deepseek-harness-plugins](https://github.com/imsai-sh/awesome-deepseek-harness-plugins)） | 自动：定时扫描带 `dsh-plugin` topic 的仓库并静态校验 `dsh.bundle.patch`；也可提 PR 手动收录 | 同上 + topic；手动 PR 见 `CONTRIBUTING.md` |
-| **awesome-dsh-plugin**（社区总目录） | 手动 PR：新增 `data/plugins/<owner>__<repo>.yml` 一个文件 | `dsh.bundle` 必需、仓库**创建满 1 天**、有 `dsh-plugin` topic、描述属实、≤3 条/PR |
+| **awesome-dsh-plugin**（社区总目录） | 手动 PR：新增 `data/plugins/dudhdkebesii__<repo>.yml` 一个文件 | `dsh.bundle` 必需、仓库**创建满 1 天**、有 `dsh-plugin` topic、描述属实、≤3 条/PR |
 | **dshfind.com** | 社区站，抓 GitHub 仓库；收录异常可在 [hikariming/dshfind](https://github.com/hikariming/dshfind) 提 issue | 同上 |
 
 ### 3.1 awesome-dsh-plugin 的 PR 长这样
 
 仓库：`https://github.com/awesome-dsh-plugin/awesome-dsh-plugin`
-新增文件：`data/plugins/<owner>__dsh-image-pin-comment.yml`
+新增文件：`data/plugins/dudhdkebesii__dsh-image-pin-comment.yml`
 
 ```yaml
-url: https://github.com/<owner>/dsh-image-pin-comment
-name: <owner>/dsh-image-pin-comment
+url: https://github.com/dudhdkebesii/dsh-image-pin-comment
+name: dudhdkebesii/dsh-image-pin-comment
 category: ui
 description:
   en: Pin-numbered anchor points on a DSH image preview and send the original image with a pixel-accurate coordinate list.
   zh: 在 DSH 图片预览上钉编号锚点，随原图一起发出像素级坐标清单，一次可标注多张图。
-tarball: https://github.com/<owner>/dsh-image-pin-comment/releases/latest/download/dsh-image-pin-comment.tgz
+tarball: https://github.com/dudhdkebesii/dsh-image-pin-comment/releases/latest/download/dsh-image-pin-comment.tgz
 ```
 
 要点：
